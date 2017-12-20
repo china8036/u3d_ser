@@ -32,7 +32,8 @@ public class SendThread extends Thread {
 				out.flush();
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println(e.getMessage());
+			//e.printStackTrace();
 		}
 
 	}
