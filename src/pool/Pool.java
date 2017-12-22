@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.locks.Lock;
@@ -66,8 +67,13 @@ public class Pool implements TimerListener {
 	 * 定时执行
 	 */
 	public void onTimer() {
+		long nowTime = new Date().getTime();
+		//System.out.println("client num is :" + clientList.size());
 		for(SocketThread client:clientList) {
-			
+			if(nowTime - client.getHeartBeatLastTime() > 5000) {
+				System.out.println(nowTime - client.getHeartBeatLastTime());
+				this.closeClient(client);//关闭链接
+			}
 		}
 		//System.out.println("Hello im pool on timer");
 	}
@@ -124,6 +130,7 @@ public class Pool implements TimerListener {
 	 * @param client
 	 */
 	public void closeClient(SocketThread client) {
+		System.out.println("heartbeat timeout:cloe client");
 		this.delClient(client);
 		try {
 			client.close();

@@ -25,34 +25,35 @@ public class SocketThread extends Thread {
 		this.pool = pool;
 		this.client = client;
 		this.pool.addClient(this);
+		this.lastHeartbeat = new Date().getTime();
 	}
 
-	
 	/**
 	 * 获取最后的心跳时间
+	 * 
 	 * @return
 	 */
 	public long getHeartBeatLastTime() {
 		return this.lastHeartbeat;
 	}
-	
+
 	/**
 	 * 心跳更新
 	 */
 	private void heartbeat(String msg) {
-		if(msg.equals("heartbeat")) {
+		if (msg.equals("heartbeat")) {
 			System.out.println("heartbeat :" + new Date().toString());
 			this.lastHeartbeat = new Date().getTime();
 		}
-		
+
 	}
 
 	@Override
 	public void run() {
-		BufferedReader in;
+		InputStreamReader in;
 		PrintWriter out;
 		try {
-			in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+			in = new InputStreamReader(client.getInputStream());
 			out = new PrintWriter(client.getOutputStream());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -61,27 +62,34 @@ public class SocketThread extends Thread {
 
 		try {
 			while (true) {
-				if(in == null) {
+				if (in == null) {
 					return;
 				}
-				String info = in.readLine();
-				this.heartbeat(info);
+				Protocol.getMsg(in);
+				//String info = in.readLine();
+				//System.out.println(info);
+				//this.heartbeat(info);
 
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("exception:" + e.getMessage());
 		}
 		try {
 			in.close();
 			out.close();
 		} catch (Exception e1) {
 
-			e1.printStackTrace();
+			System.out.println("exception:" + e1.getMessage());
 		}
 
 	}
-	
+
 	public void close() {
-		
+		try {
+			this.client.close();
+		} catch (Exception e1) {
+
+			e1.printStackTrace();
+		}
 	}
 }
