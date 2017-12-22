@@ -1,9 +1,9 @@
-import pool.Rsync;
+import pool.Pool;
 
 public class Server {
 
 	public static void main(String[] args) {
-		(new Rsync(8888)).start();
+		(new Pool(8888)).start();
 
 	}
 }

@@ -6,6 +6,8 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import storage.Storage;
+
 public class SendThread extends Thread {
 
 	PrintWriter out;
@@ -25,15 +27,20 @@ public class SendThread extends Thread {
 		try {
 			while (true) {
 				if (isServer) {
-					out.println("Server  " + sf.format(new Date()) + "\n\t" + userin.readLine());
+					if(Storage.isNew) {
+						Storage.isNew = false;
+						out.println(Storage.addr);
+					}
+					
+					//out.println("Server  " + sf.format(new Date()) + "\n\t" + userin.readLine());
 				} else {
 					out.println("client  " + sf.format(new Date()) + "\n\t" + userin.readLine());
 				}
 				out.flush();
 			}
 		} catch (IOException e) {
-			System.out.println(e.getMessage());
-			//e.printStackTrace();
+			//System.out.println(e.getMessage());
+			e.printStackTrace();
 		}
 
 	}
