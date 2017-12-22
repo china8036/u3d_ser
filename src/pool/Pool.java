@@ -1,27 +1,29 @@
 package pool;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import storage.Storage;
+import pool.Timer.TimerTaskList;
+import pool.Timer.TimerListener;
 
-public class Pool {
+public class Pool implements TimerListener {
 
 	private int port;
 
-	private List<Socket> clientList = new ArrayList<Socket>();
+	private List<SocketThread> clientList = new ArrayList<SocketThread>();
 
 	private Lock lock = new ReentrantLock();
 
 	private final int MAX_CLIENT_NUM = 10;
+	
+	private final int TIMER_SECOND = 1;
 
 	public Pool(int port) {
 		this.port = port;
@@ -30,6 +32,7 @@ public class Pool {
 	public void start() {
 		try {
 			ServerSocket server = new ServerSocket(this.port);
+			this.runTimmer();
 			while (true) {// 死循环
 				System.out.println("wait for accept:");
 				Socket client = server.accept();
@@ -39,15 +42,6 @@ public class Pool {
 					client.close();
 				} else {
 					new SocketThread(this, client).start();
-					// addClient(client);
-					// System.out.println("accept:" + client.getRemoteSocketAddress().toString());
-					// BufferedReader in = new BufferedReader(new
-					// InputStreamReader(client.getInputStream()));
-					// PrintWriter out = new PrintWriter(client.getOutputStream());
-					// BufferedReader userin = new BufferedReader(new InputStreamReader(System.in));
-
-					// new ReceiveTread(server, in, out, userin, client).start();
-					// new SendThread(out, userin, true).start();
 				}
 
 			}
@@ -58,11 +52,33 @@ public class Pool {
 		}
 	}
 
+	
+	/**
+	 * 运行定时任务
+	 */
+	public void runTimmer() {
+        // schedules the task to be run in an interval  
+        new Timer().scheduleAtFixedRate(new TimerTaskList(this), 0, TIMER_SECOND * 1000);  
+	}
+	
+	
+	/**
+	 * 定时执行
+	 */
+	public void onTimer() {
+		for(SocketThread client:clientList) {
+			
+		}
+		//System.out.println("Hello im pool on timer");
+	}
+	
+	
+	
 	/**
 	 * 获取客服端列表
 	 * @return
 	 */
-	public List<Socket> getClients() {
+	public List<SocketThread> getClients() {
 		return clientList;
 	}
 	
@@ -73,11 +89,7 @@ public class Pool {
 	 * @throws IOException
 	 */
 	public void sendToAllClients(String info) throws IOException {
-		for(Socket client:clientList) {
-			PrintWriter out = new PrintWriter(client.getOutputStream());
-			out.println(info);
-			out.flush();
-			//out.close();
+		for(SocketThread client:clientList) {
 		}
 		
 	}
@@ -87,7 +99,7 @@ public class Pool {
 	 * 
 	 * @param client
 	 */
-	public void addClient(Socket client) {
+	public void addClient(SocketThread client) {
 		lock.lock();
 		if (this.clientList.contains(client)) {
 			return;
@@ -101,7 +113,7 @@ public class Pool {
 	 * 
 	 * @param client
 	 */
-	public void delClient(Socket client) {
+	public void delClient(SocketThread client) {
 		this.clientList.remove(client);
 	}
 	
@@ -111,7 +123,7 @@ public class Pool {
 	 * 关闭客服端链接
 	 * @param client
 	 */
-	public void closeClient(Socket client) {
+	public void closeClient(SocketThread client) {
 		this.delClient(client);
 		try {
 			client.close();
