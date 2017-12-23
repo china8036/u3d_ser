@@ -54,12 +54,9 @@ public class SocketThread extends Thread {
 				if (client == null) {
 					return;
 				}
-				//String msg = Protocol.getMsg(client.getInputStream());
 				String revMsg = Route.parse( Protocol.decodeMsg(client.getInputStream()));
+				this.heartbeat(revMsg);
 				Protocol.sendMsg(client.getOutputStream(), revMsg);
-//				client.getOutputStream().write(Byte.valueOf(revMsg));
-//				client.getOutputStream().flush();
-				//this.heartbeat(msg);
 
 			}
 		} catch (IOException e) {

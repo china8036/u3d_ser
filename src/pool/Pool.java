@@ -33,7 +33,7 @@ public class Pool implements TimerListener {
 	public void start() {
 		try {
 			ServerSocket server = new ServerSocket(this.port);
-			//this.runTimmer();
+			this.runTimmer();
 			while (true) {// 死循环
 				System.out.println("wait for accept:");
 				Socket client = server.accept();
@@ -68,14 +68,13 @@ public class Pool implements TimerListener {
 	 */
 	public void onTimer() {
 		long nowTime = new Date().getTime();
-		//System.out.println("client num is :" + clientList.size());
+		System.out.println("client num is :" + clientList.size());
 		for(SocketThread client:clientList) {
 			if(nowTime - client.getHeartBeatLastTime() > 5000) {
 				System.out.println(nowTime - client.getHeartBeatLastTime());
 				this.closeClient(client);//关闭链接
 			}
 		}
-		//System.out.println("Hello im pool on timer");
 	}
 	
 	
@@ -95,8 +94,8 @@ public class Pool implements TimerListener {
 	 * @throws IOException
 	 */
 	public void sendToAllClients(String info) throws IOException {
-		for(SocketThread client:clientList) {
-		}
+//		for(SocketThread client:clientList) {
+//		}
 		
 	}
 	
