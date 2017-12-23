@@ -50,22 +50,23 @@ public class SocketThread extends Thread {
 
 	@Override
 	public void run() {
-		InputStreamReader in;
-		PrintWriter out;
-		try {
-			in = new InputStreamReader(client.getInputStream());
-			out = new PrintWriter(client.getOutputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
+//		InputStreamReader in;
+//		PrintWriter out;
+//		try {
+//			in = new InputStreamReader(client.getInputStream());
+//			out = new PrintWriter(client.getOutputStream());
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//			return;
+//		}
 
 		try {
 			while (true) {
-				if (in == null) {
+				if (client == null) {
 					return;
 				}
-				Protocol.getMsg(in);
+				String msg = Protocol.getMsg(client.getInputStream());
+				System.out.println(msg);
 				//String info = in.readLine();
 				//System.out.println(info);
 				//this.heartbeat(info);
@@ -74,13 +75,13 @@ public class SocketThread extends Thread {
 		} catch (IOException e) {
 			System.out.println("exception:" + e.getMessage());
 		}
-		try {
-			in.close();
-			out.close();
-		} catch (Exception e1) {
-
-			System.out.println("exception:" + e1.getMessage());
-		}
+//		try {
+//			in.close();
+//			out.close();
+//		} catch (Exception e1) {
+//
+//			System.out.println("exception:" + e1.getMessage());
+//		}
 
 	}
 
