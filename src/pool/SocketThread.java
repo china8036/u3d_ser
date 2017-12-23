@@ -1,9 +1,7 @@
 package pool;
 
-import java.io.BufferedReader;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Date;
 
@@ -50,38 +48,23 @@ public class SocketThread extends Thread {
 
 	@Override
 	public void run() {
-//		InputStreamReader in;
-//		PrintWriter out;
-//		try {
-//			in = new InputStreamReader(client.getInputStream());
-//			out = new PrintWriter(client.getOutputStream());
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//			return;
-//		}
 
 		try {
 			while (true) {
 				if (client == null) {
 					return;
 				}
-				String msg = Protocol.getMsg(client.getInputStream());
-				System.out.println(msg);
-				//String info = in.readLine();
-				//System.out.println(info);
-				//this.heartbeat(info);
+				//String msg = Protocol.getMsg(client.getInputStream());
+				String revMsg = Route.parse( Protocol.decodeMsg(client.getInputStream()));
+				Protocol.sendMsg(client.getOutputStream(), revMsg);
+//				client.getOutputStream().write(Byte.valueOf(revMsg));
+//				client.getOutputStream().flush();
+				//this.heartbeat(msg);
 
 			}
 		} catch (IOException e) {
 			System.out.println("exception:" + e.getMessage());
 		}
-//		try {
-//			in.close();
-//			out.close();
-//		} catch (Exception e1) {
-//
-//			System.out.println("exception:" + e1.getMessage());
-//		}
 
 	}
 

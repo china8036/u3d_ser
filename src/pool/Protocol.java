@@ -3,30 +3,49 @@ package pool;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
+import java.io.OutputStream;
 
 public class Protocol {
 
 	
-	public static String getMsg(InputStream in) throws IOException {
+	/**
+	 * 解析msg
+	 * @param in
+	 * @return
+	 * @throws IOException
+	 */
+	public static String decodeMsg(InputStream in) throws IOException {
 		byte[] lenByte = new byte[4];
 		int readLen = in.read(lenByte, 0, 4);
 		int msgLen = byteArrayToInt(lenByte);
-//		System.out.println("msg length:" + msgLen);
 		char[] msgChar = new char[msgLen];
 		readLen = new InputStreamReader(in).read(msgChar, 0, msgLen);
 		System.out.println("rev msg Char Len:" + readLen);
-//		System.out.println(msgByte);
-//		if(readLen == -1) {
-//			throw new Exception("read error");
-//		}
-//		System.out.println(msgChar);
+		System.out.println("msg:");
+		System.out.println(msgChar);
 		return String.valueOf(msgChar);
 	}
 
 	
 	
+	/**
+	 * 发送消息
+	 * @param out
+	 * @param msg
+	 * @throws IOException
+	 */
+	public static void sendMsg(OutputStream out, String msg) throws IOException {
+		out.write(intToByteArray(msg.length()));
+		out.write(msg.getBytes());
+		out.flush();
+	}
 	
+	
+	/**
+	 * 字节数组转整形
+	 * @param b
+	 * @return
+	 */
 	public static int byteArrayToInt(byte[] b) {
 		if(b.length !=4 ) {
 			return 0;
@@ -39,4 +58,19 @@ public class Protocol {
 		            (b[2] & 0xFF) << 16 |   
 		            (b[3] & 0xFF) << 24;   
 		}   
+	
+	 
+	//整形转字节数据 按 Little Endian
+	public static byte[] intToByteArray(int a) {
+		byte[] b = new byte[4];
+		 
+		b[0] = (byte)(a & 0xff);
+		b[1] = (byte)(a>>8 & 0xff);
+		b[2] = (byte)(a>>16 & 0xff);
+		b[3] = (byte)(a>>24 & 0xff);
+		return b;
+	}
+	
+  
+	
 }
