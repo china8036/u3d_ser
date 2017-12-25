@@ -34,10 +34,13 @@ public class Protocol {
 	 * @param msg
 	 * @throws IOException
 	 */
-	public static void sendMsg(OutputStream out, String msg) throws IOException {
-		out.write(intToByteArray(msg.length()));
-		out.write(msg.getBytes());
-		out.flush();
+	public static void sendMsg(OutputStream out, String[] msg) throws IOException {
+		for(int i=0;i<msg.length;i++) {
+			out.write(intToByteArray(msg[0].length()));
+			out.write(msg[0].getBytes());
+			out.flush();
+		}
+		
 	}
 	
 	

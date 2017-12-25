@@ -33,7 +33,7 @@ public class Pool implements TimerListener {
 	public void start() {
 		try {
 			ServerSocket server = new ServerSocket(this.port);
-			this.runTimmer();
+			//this.runTimmer();
 			while (true) {// 死循环
 				System.out.println("wait for accept:");
 				Socket client = server.accept();

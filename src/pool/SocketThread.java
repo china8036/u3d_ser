@@ -54,9 +54,10 @@ public class SocketThread extends Thread {
 				if (client == null) {
 					return;
 				}
-				String revMsg = Route.parse( Protocol.decodeMsg(client.getInputStream()));
+				String revMsg = Protocol.decodeMsg(client.getInputStream());
 				this.heartbeat(revMsg);
-				Protocol.sendMsg(client.getOutputStream(), revMsg);
+				String[] rspMsg = Route.run(revMsg);
+				Protocol.sendMsg(client.getOutputStream(), rspMsg);
 
 			}
 		} catch (IOException e) {
