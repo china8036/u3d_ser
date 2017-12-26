@@ -35,16 +35,7 @@ public class SocketThread extends Thread {
 		return this.lastHeartbeat;
 	}
 
-	/**
-	 * 心跳更新
-	 */
-	private void heartbeat(String msg) {
-		if (msg.equals("heartbeat")) {
-			System.out.println("heartbeat :" + new Date().toString());
-			this.lastHeartbeat = new Date().getTime();
-		}
 
-	}
 
 	@Override
 	public void run() {
@@ -55,11 +46,10 @@ public class SocketThread extends Thread {
 					return;
 				}
 				ptl.decodeMsg();
-				ptl.debugMsgQueue();
-//				String revMsg = "";
-//				this.heartbeat(revMsg);
-//				String[] rspMsg = Route.run(revMsg);
-				//Protocol.sendMsg(client.getOutputStream(), rspMsg);
+				String[] revMsg = ptl.getRevMsg();
+				this.lastHeartbeat = ptl.getHeartBeatTime();
+				String[] rspMsg = Route.run(revMsg);
+				Protocol.sendMsg(client.getOutputStream(), rspMsg);
 
 			}
 		} catch (IOException e) {

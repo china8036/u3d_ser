@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Queue;
 import java.util.LinkedList;
 
@@ -53,6 +54,12 @@ public class Protocol {
 	 * 处理完成的msg队列
 	 */
 	private Queue<String> queue = new LinkedList<String>();
+	
+	
+	/**
+	 * 最后的心跳时间
+	 */
+	private long lastHeartbeat = new Date().getTime();
 
 	/**
 	 * 构造
@@ -76,22 +83,48 @@ public class Protocol {
 		Arrays.fill(readByte, (byte) 0);// 重置重新来
 	}
 
+
+	
 	/**
-	 * 获取消息队列
+	 * 获取消息列表
 	 * @return
 	 */
-	public Queue<String> getMsgQueue(){
-		return this.queue;
-	}
-	
-	
-	public void debugMsgQueue() {
-		
-		if(this.queue.size() > 0) {
-			String tmpS = this.queue.poll();
-			System.out.println(tmpS);
+	public String[] getRevMsg() {
+		int qSize = this.queue.size();
+		String[] msg;
+		if(qSize < 1) {
+			return null;
 		}
+		msg = new String[qSize];
+        for(int i=0;i < qSize;i++) {
+        	msg[i] = this.queue.poll();
+        	this.dealHeartbeat(msg[i]);
+        }
+		return msg;
 	}
+	
+	
+	/**
+	 * 心跳更新
+	 */
+	private void dealHeartbeat(String msg) {
+		if (msg.equals("heartbeat")) {
+			System.out.println("heartbeat :" + new Date().toString());
+			this.lastHeartbeat = new Date().getTime();
+		}
+
+	}
+	
+	
+	/**
+	 * 获取最后心跳时间
+	 * @return
+	 */
+	public long getHeartBeatTime() {
+		return this.lastHeartbeat;
+		
+	}
+	
 	
 	/**
 	 * 解决粘包 分包问题
