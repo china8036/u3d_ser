@@ -69,7 +69,7 @@ public class Pool implements TimerListener {
 	public void onTimer() {
 		long nowTime = new Date().getTime();
 		System.out.println("client num is :" + clientList.size());
-		for(SocketThread client:clientList) {
+		for(SocketThread client:clientList) {//监控心跳 超时断开连接
 			if(nowTime - client.getHeartBeatLastTime() > 5000) {
 				System.out.println(nowTime - client.getHeartBeatLastTime());
 				this.closeClient(client);//关闭链接

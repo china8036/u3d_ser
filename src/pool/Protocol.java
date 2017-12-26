@@ -3,10 +3,12 @@ package pool;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.util.List;
 
 public class Protocol {
 
@@ -89,16 +91,19 @@ public class Protocol {
 	 * 获取消息列表
 	 * @return
 	 */
-	public String[] getRevMsg() {
+	public List<String> getRspMsg() {
 		int qSize = this.queue.size();
-		String[] msg;
+		List<String> msg = new ArrayList<String>();
 		if(qSize < 1) {
 			return null;
 		}
-		msg = new String[qSize];
         for(int i=0;i < qSize;i++) {
-        	msg[i] = this.queue.poll();
-        	this.dealHeartbeat(msg[i]);
+        	String tmpMsg = this.queue.poll();
+        	this.dealHeartbeat(tmpMsg);
+        	String[] tmpRsp = Route.run(tmpMsg);
+        	for(int tmpI=0;tmpI<tmpRsp.length;tmpI++) {
+        		msg.add(tmpRsp[tmpI]);
+        	}
         }
 		return msg;
 	}
@@ -181,13 +186,13 @@ public class Protocol {
 	 * @param msg
 	 * @throws IOException
 	 */
-	public static void sendMsg(OutputStream out, String[] msg) throws IOException {
-		for (int i = 0; i < msg.length; i++) {
-			out.write(intToByteArray(msg[0].length()));
-			out.write(msg[0].getBytes());
-			out.flush();
+	public static void sendMsg(OutputStream out, List<String> msg) throws IOException {
+		int length = msg.size();
+		for (int i = 0; i < length; i++) {
+			out.write(intToByteArray(msg.get(i).length()));
+			out.write(msg.get(i).getBytes());
 		}
-
+		out.flush();
 	}
 
 	/**

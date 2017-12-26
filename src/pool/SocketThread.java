@@ -1,6 +1,7 @@
 package pool;
 
 
+import java.util.List;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Date;
@@ -46,9 +47,8 @@ public class SocketThread extends Thread {
 					return;
 				}
 				ptl.decodeMsg();
-				String[] revMsg = ptl.getRevMsg();
+				List<String> rspMsg = ptl.getRspMsg();
 				this.lastHeartbeat = ptl.getHeartBeatTime();
-				String[] rspMsg = Route.run(revMsg);
 				Protocol.sendMsg(client.getOutputStream(), rspMsg);
 
 			}
