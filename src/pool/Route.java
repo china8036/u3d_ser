@@ -8,8 +8,8 @@ public class Route {
 
 
 	public static String[] run(String msg) {
-		String[] tmpRspMsg = new String[2];
-		tmpRspMsg[0]  =  tmpRspMsg[1] = msg;
+		String[] tmpRspMsg = new String[1];
+		tmpRspMsg[0]  = msg;
 		return tmpRspMsg;
 	}
 	

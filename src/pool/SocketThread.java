@@ -48,16 +48,18 @@ public class SocketThread extends Thread {
 
 	@Override
 	public void run() {
-
 		try {
+			Protocol ptl = new Protocol(client.getInputStream());
 			while (true) {
 				if (client == null) {
 					return;
 				}
-				String revMsg = Protocol.decodeMsg(client.getInputStream());
-				this.heartbeat(revMsg);
-				String[] rspMsg = Route.run(revMsg);
-				Protocol.sendMsg(client.getOutputStream(), rspMsg);
+				ptl.decodeMsg();
+				ptl.debugMsgQueue();
+//				String revMsg = "";
+//				this.heartbeat(revMsg);
+//				String[] rspMsg = Route.run(revMsg);
+				//Protocol.sendMsg(client.getOutputStream(), rspMsg);
 
 			}
 		} catch (IOException e) {

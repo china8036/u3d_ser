@@ -2,78 +2,186 @@ package pool;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Queue;
+import java.util.LinkedList;
 
 public class Protocol {
 
-	
+	/**
+	 * buffer 长度
+	 */
+	private final int BUFFER_LEN = 1024;
+
+	/**
+	 * 标识msg长度的信息的字节长度
+	 */
+	private final int LEN_BYTES_LENGTH = 4;
+
+	/**
+	 * 读取的字节
+	 */
+	private byte[] readByte = new byte[BUFFER_LEN];
+
+	/**
+	 * 标识newMsg还是oldMsg
+	 */
+	private boolean isNewMsg = true;
+
+	/**
+	 * 本次消息完整长度
+	 */
+	private int msgLen = 0;
+
+	/**
+	 * 本次消息还缺少多长
+	 */
+	private int msgLackLen = 0;
+
+	/**
+	 * 本次消息字节数组
+	 */
+	private byte[] msgByte;
+
+	/**
+	 * 输入流
+	 */
+	private InputStream in;
+
+	/**
+	 * 处理完成的msg队列
+	 */
+	private Queue<String> queue = new LinkedList<String>();
+
+	/**
+	 * 构造
+	 * 
+	 * @param in
+	 */
+	public Protocol(InputStream in) {
+		this.in = in;
+	}
+
 	/**
 	 * 解析msg
+	 * 
 	 * @param in
 	 * @return
 	 * @throws IOException
 	 */
-	public static String decodeMsg(InputStream in) throws IOException {
-		byte[] lenByte = new byte[4];
-		int readLen = in.read(lenByte, 0, 4);
-		int msgLen = byteArrayToInt(lenByte);
-		char[] msgChar = new char[msgLen];
-		readLen = new InputStreamReader(in).read(msgChar, 0, msgLen);
-		System.out.println("rev msg Char Len:" + readLen);
-		System.out.println("msg:");
-		System.out.println(msgChar);
-		return String.valueOf(msgChar);
+	public void decodeMsg() throws IOException {
+		int readLen = in.read(readByte, 0, readByte.length);
+		dealPackage(Arrays.copyOfRange(readByte, 0, readLen));
+		Arrays.fill(readByte, (byte) 0);// 重置重新来
 	}
 
+	/**
+	 * 获取消息队列
+	 * @return
+	 */
+	public Queue<String> getMsgQueue(){
+		return this.queue;
+	}
 	
+	
+	public void debugMsgQueue() {
+		
+		if(this.queue.size() > 0) {
+			String tmpS = this.queue.poll();
+			System.out.println(tmpS);
+		}
+	}
 	
 	/**
+	 * 解决粘包 分包问题
+	 * 
+	 * @param msgByte
+	 */
+	public void dealPackage(byte[] msgByte) {
+		int len = msgByte.length;
+		if (this.isNewMsg) {// 新的消息
+			this.msgLen = byteArrayToInt(new byte[] { msgByte[0], msgByte[1], msgByte[2], msgByte[3] });
+			if (this.msgLen + 4 <= len) {//此msgByte里面含有完整的此条信息
+				this.isNewMsg = true;
+				queue.add(new String(Arrays.copyOfRange(msgByte, 4, msgLen + 4)));
+                if((this.msgLen + 4) == len) {//正好相等处理结束
+                	return;//完成此次拼接
+                }
+                this.dealPackage(Arrays.copyOfRange(msgByte, msgLen + LEN_BYTES_LENGTH, len));//递归处理剩余的字节
+			}else {//长度小于msgLen 下一条按未完成消息处理
+				this.isNewMsg = false;
+				this.msgByte = new byte[this.msgLen];//生成本次的存储字节数组
+				this.msgLackLen = this.msgLen - len + 4;
+				this.msgByte = Arrays.copyOfRange(msgByte, 4, len);//赋值给msgByte并等下次继续拼接
+			}
+
+		}else {//未完成拼接的消息
+			
+			if(this.msgLackLen > len) {//本次仍然长度不够
+		           for (int i = 0; i < len; i++)
+	                {
+	                    this.msgByte[this.msgLen - this.msgLackLen + i] = msgByte[i];// 赋值给tMsgByte 等下次消息继续拼接
+	                }
+		            this.msgLackLen -= len;
+			}else {
+				 this.isNewMsg = true;//下次按newMsg处理
+		         for (int i = 0; i < this.msgLackLen; i++)
+	                {
+	                    this.msgByte[this.msgLen - this.msgLackLen + i] = msgByte[i];// 赋值给tMsgByte 等下次消息继续拼接
+	              }
+		         queue.add(new String(this.msgByte));;//完成拼接 并把此消息加入队列
+		         if(this.msgLackLen == len) {
+		        	 this.msgLen = this.msgLackLen = 0;
+		        	 return;//完成
+		         }
+		         this.dealPackage(Arrays.copyOfRange(msgByte, this.msgLackLen, len));
+			}
+		}
+
+	}
+
+	/**
 	 * 发送消息
+	 * 
 	 * @param out
 	 * @param msg
 	 * @throws IOException
 	 */
 	public static void sendMsg(OutputStream out, String[] msg) throws IOException {
-		for(int i=0;i<msg.length;i++) {
+		for (int i = 0; i < msg.length; i++) {
 			out.write(intToByteArray(msg[0].length()));
 			out.write(msg[0].getBytes());
 			out.flush();
 		}
-		
+
 	}
-	
-	
+
 	/**
 	 * 字节数组转整形
+	 * 
 	 * @param b
 	 * @return
 	 */
 	public static int byteArrayToInt(byte[] b) {
-		if(b.length !=4 ) {
+		if (b.length != 4) {
 			return 0;
 		}
-		//java 是 Big endian 
-		//Windos(x86,x64)和Linux(x86,x64)都是Little Endian操作系统  
-		//C/C++语言编写的程序里数据存储顺序是跟编译平台所在的CPU相关的
-		return   b[0] & 0xFF |   
-		            (b[1] & 0xFF) << 8 |   
-		            (b[2] & 0xFF) << 16 |   
-		            (b[3] & 0xFF) << 24;   
-		}   
-	
-	 
-	//整形转字节数据 按 Little Endian
+		// java 是 Big endian
+		// Windos(x86,x64)和Linux(x86,x64)都是Little Endian操作系统
+		// C/C++语言编写的程序里数据存储顺序是跟编译平台所在的CPU相关的
+		return b[0] & 0xFF | (b[1] & 0xFF) << 8 | (b[2] & 0xFF) << 16 | (b[3] & 0xFF) << 24;
+	}
+
+	// 整形转字节数据 按 Little Endian
 	public static byte[] intToByteArray(int a) {
 		byte[] b = new byte[4];
-		 
-		b[0] = (byte)(a & 0xff);
-		b[1] = (byte)(a>>8 & 0xff);
-		b[2] = (byte)(a>>16 & 0xff);
-		b[3] = (byte)(a>>24 & 0xff);
+
+		b[0] = (byte) (a & 0xff);
+		b[1] = (byte) (a >> 8 & 0xff);
+		b[2] = (byte) (a >> 16 & 0xff);
+		b[3] = (byte) (a >> 24 & 0xff);
 		return b;
 	}
-	
-  
-	
+
 }
