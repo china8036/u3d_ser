@@ -1,16 +1,19 @@
 package storage;
 
 
-import redis.clients.jedis.Jedis;
+import java.util.Hashtable;
+
+
 
 public class Storage {
+	
+	
+	 static Hashtable msg = new Hashtable();
+	 
 
-	private Jedis jedis;
+	
 
-	public Storage() {
-		this.jedis = new Jedis("127.0.0.1", 6379);
-        System.out.println("连接成功");
-	}
+
 	
 	/**
 	 * 设置 key 为 val
@@ -18,7 +21,7 @@ public class Storage {
 	 * @param val
 	 */
 	public void set(String key, String val) {
-		this.jedis.set(key, val);
+		msg.put(key, val);
 		
 	}
 	
@@ -28,11 +31,16 @@ public class Storage {
 	 * @return
 	 */
 	public String get(String key) {
-		return this.jedis.get(key);
+		return (String)msg.get(key);
 	}
 	
+	
+
+	/**
+	 * 关闭
+	 */
 	public void close() {
-		this.jedis.close();
+		
 	}
 	
 	

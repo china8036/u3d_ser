@@ -1,30 +1,41 @@
 package pool;
 
 
-import storage.Storage;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
+
+
 
 public class Route {
 
-	private static Storage storage;
+	static Map<String, String> msgMap = new HashMap<String, String>();
 	
-	
-	
-	public static String[] run(String msg) {
-		return new String[] {msg};
-	}
-	
+
 	
 	/**
-	 * 单例获取storage
+	 * 路由处理
+	 * @param msg
 	 * @return
 	 */
-	public static Storage getStorage() {
-		
-		if(storage != null) {
-			return storage;
+	public static String[] run(String msg) {
+		String[] data = msg.split(" ");
+		if(data.length == 5 && data[0].equals("pos")) {//位置信息
+			msgMap.put(data[1], msg);
 		}
-		storage = new Storage();
-		return storage;
+		String[] retMsg = new String[msgMap.size()];
+		int index = 0;
+	    for (String key : msgMap.keySet()) {
+	         //System.out.println("key= "+ key + " and value= " + map.get(key));
+	    	 retMsg[index] = (String)msgMap.get(key);
+	         index++;
+	     }
+	   
+		return retMsg;
 	}
+	
+	
+
 	
 }
