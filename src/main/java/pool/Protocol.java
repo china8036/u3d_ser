@@ -148,7 +148,7 @@ public class Protocol {
 		if (this.isNewMsg) {// 新的消息
 			System.out.println("Memory:");
 			System.out.println(Runtime.getRuntime().freeMemory());
-			
+
 			// 处理未满4个字节的数据
 			if (this.waitMsg != null) {
 				byte[] tmpMsg = arrayMerge(this.waitMsg, msgByte);
@@ -178,9 +178,10 @@ public class Protocol {
 			} else {// 长度小于msgLen 下一条按未完成消息处理
 				this.isNewMsg = false;
 				this.msgLackLen = this.msgLen - len + LEN_BYTES_LENGTH;
-				for (int i = LEN_BYTES_LENGTH; i < len; i++) {
-					this.msgByte[i - LEN_BYTES_LENGTH] = msgByte[i];
-				}
+				System.arraycopy(msgByte, LEN_BYTES_LENGTH, this.msgByte, 0, len - LEN_BYTES_LENGTH);
+				// for (int i = LEN_BYTES_LENGTH; i < len; i++) {
+				// this.msgByte[i - LEN_BYTES_LENGTH] = msgByte[i];
+				// }
 			}
 
 		} else {// 未完成拼接的消息
@@ -192,9 +193,11 @@ public class Protocol {
 				this.msgLackLen -= len;
 			} else {
 				this.isNewMsg = true;// 下次按newMsg处理
-				for (int i = 0; i < this.msgLackLen; i++) {
-					this.msgByte[this.msgLen - this.msgLackLen + i] = msgByte[i];// 赋值给tMsgByte 等下次消息继续拼接
-				}
+				System.arraycopy(msgByte, 0, this.msgByte, this.msgLen - this.msgLackLen, this.msgLackLen);
+				// for (int i = 0; i < this.msgLackLen; i++) {
+				// this.msgByte[this.msgLen - this.msgLackLen + i] = msgByte[i];// 赋值给tMsgByte
+				// 等下次消息继续拼接
+				// }
 
 				queue.add(new String(Arrays.copyOfRange(this.msgByte, 0, this.msgLen)));
 				;// 完成拼接 并把此消息加入队列
