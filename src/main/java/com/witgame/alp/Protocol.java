@@ -1,11 +1,9 @@
-package pool;
+package com.witgame.alp;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Queue;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,11 +14,6 @@ public class Protocol {
 	 * buffer 长度
 	 */
 	private final int BUFFER_LEN = 1024;
-
-	/**
-	 * 消息提最长长度
-	 */
-	private final int MAX_MSG_LEN = 1024;
 
 	/**
 	 * 标识msg长度的信息的字节长度
@@ -50,7 +43,7 @@ public class Protocol {
 	/**
 	 * 本次消息字节数组
 	 */
-	private byte[] msgByte = new byte[MAX_MSG_LEN];
+	private byte[] msgByte;
 
 	/**
 	 * 待处理的
@@ -66,11 +59,6 @@ public class Protocol {
 	 * 处理完成的msg队列
 	 */
 	private Queue<String> queue = new LinkedList<String>();
-
-	/**
-	 * 最后的心跳时间
-	 */
-	private long lastHeartbeat = new Date().getTime();
 
 	/**
 	 * 构造
@@ -95,95 +83,44 @@ public class Protocol {
 	}
 
 	/**
-	 * 获取消息列表
+	 * 解决粘包 分包问题 
 	 * 
-	 * @return
-	 */
-	public List<String> getRspMsg() {
-		int qSize = this.queue.size();
-		List<String> msg = new ArrayList<String>();
-		if (qSize < 1) {
-			return null;
-		}
-		for (int i = 0; i < qSize; i++) {
-			String tmpMsg = this.queue.poll();
-			this.dealHeartbeat(tmpMsg);
-			String[] tmpRsp = Route.run(tmpMsg);
-			for (int tmpI = 0; tmpI < tmpRsp.length; tmpI++) {
-				msg.add(tmpRsp[tmpI]);
-			}
-		}
-		return msg;
-	}
-
-	/**
-	 * 心跳更新
-	 */
-	private void dealHeartbeat(String msg) {
-		System.out.println("recv msg: " + msg);
-		if (msg.equals("heartbeat")) {
-			System.out.println("heartbeat :" + new Date().toString());
-			this.lastHeartbeat = new Date().getTime();
-		}
-
-	}
-
-	/**
-	 * 获取最后心跳时间
-	 * 
-	 * @return
-	 */
-	public long getHeartBeatTime() {
-		return this.lastHeartbeat;
-
-	}
-
-	/**
-	 * 解决粘包 分包问题 如果一条信息里面刚好含有一个4字节长msgLen后方跟了msgLen + (1-3)字节长度的信息 那么下次处理的 包不包含完整的
-	 * msgLen协议定义的4个字节长度
 	 * 
 	 * @param msgByte
 	 */
 	public void dealPackage(byte[] msgByte) {
 		int len = msgByte.length;
 		if (this.isNewMsg) {// 新的消息
-			System.out.println("Memory:");
-			System.out.println(Runtime.getRuntime().freeMemory());
-			
-			// 处理未满4个字节的数据
 			if (this.waitMsg != null) {
-				byte[] tmpMsg = arrayMerge(this.waitMsg, msgByte);
+				byte[] tmpMsg = new byte[this.waitMsg.length + msgByte.length];
+				System.arraycopy(this.waitMsg, 0, tmpMsg, 0, this.waitMsg.length);
+				System.arraycopy(msgByte, 0, tmpMsg, this.waitMsg.length, msgByte.length);
 				this.waitMsg = null;
 				this.dealPackage(tmpMsg);
 				return;
 			}
-			if (len < LEN_BYTES_LENGTH) {// 少于4个字节长度标示
+			if (len < 4) {// 少于4个字节长度标示
 				this.waitMsg = msgByte;
 				return;// 终止
 
 			}
-			// 满4个字节后的处理逻辑
-			this.msgLen = byteArrayToInt(new byte[] { msgByte[0], msgByte[1], msgByte[2], msgByte[3] });// 暂未跟随LEN_BYTES_LENGTH处理
-			if (this.msgLen > MAX_MSG_LEN) {
-				System.out.println("the len out of range max mag len");
-				System.out.println(this.msgLen);
-				return;
-			}
-			if (this.msgLen + LEN_BYTES_LENGTH <= len) {// 此msgByte里面含有完整的此条信息
+			this.msgLen = byteArrayToInt(new byte[] { msgByte[0], msgByte[1], msgByte[2], msgByte[3] });
+			if (this.msgLen + 4 <= len) {// 此msgByte里面含有完整的此条信息
 				this.isNewMsg = true;
-				queue.add(new String(Arrays.copyOfRange(msgByte, LEN_BYTES_LENGTH, msgLen + LEN_BYTES_LENGTH)));
-				if ((this.msgLen + LEN_BYTES_LENGTH) == len) {// 正好相等处理结束
+				queue.add(new String(Arrays.copyOfRange(msgByte, 4, msgLen + 4)));
+				if ((this.msgLen + 4) == len) {// 正好相等处理结束
 					return;// 完成此次拼接
 				}
 				this.dealPackage(Arrays.copyOfRange(msgByte, msgLen + LEN_BYTES_LENGTH, len));// 递归处理剩余的字节
 			} else {// 长度小于msgLen 下一条按未完成消息处理
 				this.isNewMsg = false;
-
-				// Arrays.fill(this.msgByte , (byte) 0);// 重置重新来
-				// this.msgByte = new byte[this.msgLen];// 生成本次的存储字节数组
-				this.msgLackLen = this.msgLen - len + LEN_BYTES_LENGTH;
-				for (int i = LEN_BYTES_LENGTH; i < len; i++) {
-					this.msgByte[i - LEN_BYTES_LENGTH] = msgByte[i];
+				this.msgByte = null;
+				System.out.println("Memory:");
+				System.out.println(Runtime.getRuntime().freeMemory());
+				this.msgByte = new byte[this.msgLen];// 生成本次的存储字节数组
+				this.msgLackLen = this.msgLen - len + 4;
+				for (int i = 4; i < len; i++) {
+					this.msgByte[i - 4] = msgByte[i];
 				}
 			}
 
@@ -197,11 +134,10 @@ public class Protocol {
 			} else {
 				this.isNewMsg = true;// 下次按newMsg处理
 				for (int i = 0; i < this.msgLackLen; i++) {
-					this.msgByte[this.msgLen - this.msgLackLen + i] = msgByte[i];// 赋值给tMsgByte 等下次消息继续拼接
-				}
+						this.msgByte[this.msgLen - this.msgLackLen + i] = msgByte[i];// 赋值给tMsgByte 等下次消息继续拼接
 
-				queue.add(new String(Arrays.copyOfRange(this.msgByte, 0, this.msgLen)));
-				// Arrays.fill(this.msgByte , (byte) 0);// 重置重新来 应该不用重置后面的会逐个覆盖老的
+				}
+				queue.add(new String(this.msgByte));
 				;// 完成拼接 并把此消息加入队列
 				if (this.msgLackLen == len) {
 					this.msgLen = this.msgLackLen = 0;
@@ -230,13 +166,6 @@ public class Protocol {
 			out.write(msg.get(i).getBytes());
 		}
 		out.flush();
-	}
-
-	public static byte[] arrayMerge(byte[] a, byte[] b) {
-		byte[] tmpMsg = new byte[a.length + b.length];
-		System.arraycopy(a, 0, tmpMsg, 0, a.length);
-		System.arraycopy(b, 0, tmpMsg, a.length, b.length);
-		return tmpMsg;
 	}
 
 	/**

@@ -1,4 +1,5 @@
 pool\Timer\TimerListener.class
+com\witgame\alp\Protocol.class
 pool\Pool.class
 pool\SocketThread.class
 pool\Message.class
