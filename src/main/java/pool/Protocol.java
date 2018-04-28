@@ -91,7 +91,6 @@ public class Protocol {
 	public void decodeMsg() throws IOException {
 		int readLen = in.read(readByte, 0, readByte.length);
 		dealPackage(Arrays.copyOfRange(readByte, 0, readLen));
-		//Arrays.fill(readByte, (byte) 0);// 重置重新来 因为每次去的是读取的长度 所以不重置应该也不会出问题
 	}
 
 	/**
@@ -178,9 +177,6 @@ public class Protocol {
 				this.dealPackage(Arrays.copyOfRange(msgByte, msgLen + LEN_BYTES_LENGTH, len));// 递归处理剩余的字节
 			} else {// 长度小于msgLen 下一条按未完成消息处理
 				this.isNewMsg = false;
-
-				// Arrays.fill(this.msgByte , (byte) 0);// 重置重新来
-				// this.msgByte = new byte[this.msgLen];// 生成本次的存储字节数组
 				this.msgLackLen = this.msgLen - len + LEN_BYTES_LENGTH;
 				for (int i = LEN_BYTES_LENGTH; i < len; i++) {
 					this.msgByte[i - LEN_BYTES_LENGTH] = msgByte[i];
@@ -201,7 +197,6 @@ public class Protocol {
 				}
 
 				queue.add(new String(Arrays.copyOfRange(this.msgByte, 0, this.msgLen)));
-				// Arrays.fill(this.msgByte , (byte) 0);// 重置重新来 应该不用重置后面的会逐个覆盖老的
 				;// 完成拼接 并把此消息加入队列
 				if (this.msgLackLen == len) {
 					this.msgLen = this.msgLackLen = 0;
