@@ -179,9 +179,6 @@ public class Protocol {
 				this.isNewMsg = false;
 				this.msgLackLen = this.msgLen - len + LEN_BYTES_LENGTH;
 				System.arraycopy(msgByte, LEN_BYTES_LENGTH, this.msgByte, 0, len - LEN_BYTES_LENGTH);
-				// for (int i = LEN_BYTES_LENGTH; i < len; i++) {
-				// this.msgByte[i - LEN_BYTES_LENGTH] = msgByte[i];
-				// }
 			}
 
 		} else {// 未完成拼接的消息
@@ -194,11 +191,6 @@ public class Protocol {
 			} else {
 				this.isNewMsg = true;// 下次按newMsg处理
 				System.arraycopy(msgByte, 0, this.msgByte, this.msgLen - this.msgLackLen, this.msgLackLen);
-				// for (int i = 0; i < this.msgLackLen; i++) {
-				// this.msgByte[this.msgLen - this.msgLackLen + i] = msgByte[i];// 赋值给tMsgByte
-				// 等下次消息继续拼接
-				// }
-
 				queue.add(new String(Arrays.copyOfRange(this.msgByte, 0, this.msgLen)));
 				;// 完成拼接 并把此消息加入队列
 				if (this.msgLackLen == len) {
