@@ -91,7 +91,7 @@ public class Protocol {
 	public void decodeMsg() throws IOException {
 		int readLen = in.read(readByte, 0, readByte.length);
 		dealPackage(Arrays.copyOfRange(readByte, 0, readLen));
-		Arrays.fill(readByte, (byte) 0);// 重置重新来
+		//Arrays.fill(readByte, (byte) 0);// 重置重新来 因为每次去的是读取的长度 所以不重置应该也不会出问题
 	}
 
 	/**
