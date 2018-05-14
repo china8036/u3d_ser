@@ -80,6 +80,11 @@ public class Protocol {
 	public Protocol(InputStream in) {
 		this.in = in;
 	}
+	
+	public Protocol () {
+		
+	}
+	
 
 	/**
 	 * 解析msg
@@ -170,7 +175,8 @@ public class Protocol {
 			}
 			if (this.msgLen + LEN_BYTES_LENGTH <= len) {// 此msgByte里面含有完整的此条信息
 				this.isNewMsg = true;
-				queue.add(new String(Arrays.copyOfRange(msgByte, LEN_BYTES_LENGTH, msgLen + LEN_BYTES_LENGTH)));
+				pushMsg(new String(Arrays.copyOfRange(msgByte, LEN_BYTES_LENGTH, msgLen + LEN_BYTES_LENGTH)));
+				//queue.add(new String(Arrays.copyOfRange(msgByte, LEN_BYTES_LENGTH, msgLen + LEN_BYTES_LENGTH)));
 				if ((this.msgLen + LEN_BYTES_LENGTH) == len) {// 正好相等处理结束
 					return;// 完成此次拼接
 				}
@@ -191,7 +197,8 @@ public class Protocol {
 			} else {
 				this.isNewMsg = true;// 下次按newMsg处理
 				System.arraycopy(msgByte, 0, this.msgByte, this.msgLen - this.msgLackLen, this.msgLackLen);
-				queue.add(new String(Arrays.copyOfRange(this.msgByte, 0, this.msgLen)));
+				pushMsg(new String(Arrays.copyOfRange(this.msgByte, 0, this.msgLen)));
+				//queue.add(new String(Arrays.copyOfRange(this.msgByte, 0, this.msgLen)));
 				;// 完成拼接 并把此消息加入队列
 				if (this.msgLackLen == len) {
 					this.msgLen = this.msgLackLen = 0;
@@ -201,6 +208,15 @@ public class Protocol {
 			}
 		}
 
+	}
+	
+	/**
+	 * 
+	 * @param msg
+	 */
+	protected void pushMsg(String msg) {
+		System.out.println("decode msg :" + msg);
+		//queue.add(msg);
 	}
 
 	/**
@@ -221,6 +237,16 @@ public class Protocol {
 		}
 		out.flush();
 	}
+	
+	/**
+	 * 根据协议encode
+	 * @param msg
+	 * @return
+	 */
+	public static byte[]  encodeMsg(String msg) {
+		return arrayMerge(intToByteArray(msg.length()), msg.getBytes());
+	}
+	
 
 	public static byte[] arrayMerge(byte[] a, byte[] b) {
 		byte[] tmpMsg = new byte[a.length + b.length];
